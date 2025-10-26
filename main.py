@@ -83,7 +83,7 @@ def create_total_injuries(df, injury_list):
          
 
     
-df = pd.read_csv("C:/Users/nstru/Downloads/savant_data (1).csv")
+df = pd.read_csv("./savant_data.csv")
 df = flip_names(df)
 df_sorted = df.sort_values(by = "player_name")
 response = call_api()
