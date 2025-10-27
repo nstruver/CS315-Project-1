@@ -19,6 +19,8 @@ class Node():
         # Computed by the formula: Entropy(parent) - sum(weight(node_i) * Entropy(node_i))
         self.info_gain = info_gain
 
+        self.value = value
+
 class DecisionTreeClassifier():
     def __init__(self, min_sample_split=2, max_depth=2):
         """An implementation of a Classifier Decision Tree, using entropy"""
@@ -41,20 +43,19 @@ class DecisionTreeClassifier():
     def build_tree(self, dataset, cur_depth=0):
         """Recursively build a binary decision tree"""
 
-        x, y = dataset[:,:-1], dataset[:-1]
+        x, y = dataset[:,:-1], dataset[:,-1]
         # Extract the number of samples and the number of features
         num_samples, num_features = np.shape(x)
 
         if num_samples >= self.min_sample_split and cur_depth <= self.max_depth:
             # find the best split
             best_split = self.get_best_split(dataset, num_samples, num_features)
-
             # Creates all of the left subtrees, reaches a leaf node, then creates all of the right subtrees
             if best_split["info_gain"] > 0:
                 left_subtree = self.build_tree(best_split["dataset_left"], cur_depth=1)
                 right_subtree = self.build_tree(best_split["dataset_right"], cur_depth = 1)
                 # Return the decision node for the current classifier, decision node
-                return Node(feature_index=best_split["feature_index"], threshold=best_split["threshold_gain"], left=left_subtree, right=right_subtree, info_gain=best_split["info_gain"])
+                return Node(feature_index=best_split["feature_index"], threshold=best_split["threshold"], left=left_subtree, right=right_subtree, info_gain=best_split["info_gain"])
         # compute leaf node
         leaf_value = self.calculate_leaf_value(y)
         # return leaf node
@@ -82,9 +83,9 @@ class DecisionTreeClassifier():
                 if len(dataset_left) > 0 and len(dataset_right) > 0:
                     y, left_y, right_y = dataset[:, -1], dataset_left[:, -1], dataset_right[:, -1]
                     # compute information gain
-                    cur_info_gain = self.information_gain(y, left_y, right_y)
+                    cur_info_gain = self.information_gain(y, left_y, right_y, "gini")
                     # update the best split, if needed
-                    if cur_info_gain>max_info_gain:
+                    if cur_info_gain > max_info_gain:
                         best_split["feature_index"] = feature_index
                         best_split["threshold"] = threshold
                         best_split["dataset_left"] = dataset_left
@@ -92,7 +93,7 @@ class DecisionTreeClassifier():
                         best_split["info_gain"] = cur_info_gain
                         max_info_gain = cur_info_gain
 
-            return best_split
+        return best_split
         
 
     def split(self, dataset, feature_index, threshold):
@@ -143,7 +144,7 @@ class DecisionTreeClassifier():
             gini += (probability_feature**2)
         print("Made it here!")
         return 1-gini
-
+    
     def calculate_leaf_value(self, y):
         """Compute the leaf value using a majority voting system"""
         y = list(y)
@@ -277,14 +278,16 @@ df_sorted['injuries'] = injury_column
 
 print(df_sorted.head())
 
+# col_names = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species']
+# df = pd.read_csv("iris.csv", skiprows=1, header=None, names=col_names)
 x = df.iloc[:, :-1].values
 y = df.iloc[:, -1].values.reshape(-1, 1)
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=41)
 classifier = DecisionTreeClassifier(min_sample_split=3, max_depth=3)
 classifier.fit(x_train, y_train)
-classifier.print_tree()
+# classifier.print_tree()
 
 y_pred = classifier.predict(x_test)
-accuracy_score(y_test, y_pred)
+print(accuracy_score(y_test, y_pred))
 
 df_sorted.to_csv('df_sorted')
