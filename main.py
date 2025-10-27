@@ -242,17 +242,18 @@ def create_total_injuries(df, injury_list):
     
     i = 0
     j = 0
+    print(len(injured_players))
     while i < len(players_list):
         player = players_list[i]
         
         if j < len(injured_players) and player == injured_players[j]:
+            print(injury_types[j])
             injury_column.append(injury_types[j])
             i += 1
             j += 1
             
         elif j < len(injured_players) and injured_players[j] not in players_list:
             j += 1
-            
         else:
             injury_column.append('0')
             i += 1
@@ -263,31 +264,52 @@ def create_total_injuries(df, injury_list):
          
 
     
-df = pd.read_csv("./savant_data.csv")
-df = flip_names(df)
-df_sorted = df.sort_values(by = "player_name")
+# df = pd.read_csv("./savant_data.csv")
+# df = flip_names(df)
+# df_sorted = df.sort_values(by = "player_name")
+# response = call_api()
+# injuries = find_injuries(response)
+# sorted_injuries = sorted(injuries, key =get_name)
+
+# injury_column = create_total_injuries(df_sorted, sorted_injuries)
+# injury_df = pd.DataFrame(injury_column)
+# df_sorted['injuries'] = injury_column
+
+
+columns = ["pitches","player_id","player_name","total_pitches",
+           "spin_rate","velocity","effective_speed","release_extension"
+           ,"k_percent","bb","bb_percent","release_pos_z","release_pos_x","arm_angle"] 
+
+test_dataframe = pd.read_csv('savant_data.csv', usecols=columns)
+test_dataframe = flip_names(test_dataframe)
+
+
+test_sorted = test_dataframe.sort_values(by = "player_name")
 response = call_api()
 injuries = find_injuries(response)
-sorted_injuries = sorted(injuries, key =get_name)
-
-injury_column = create_total_injuries(df_sorted, sorted_injuries)
+sorted_injuries = sorted(injuries, key=get_name)
+injury_column = create_total_injuries(test_sorted, sorted_injuries)
 injury_df = pd.DataFrame(injury_column)
+test_sorted['injuries'] = injury_column
+
+test_sorted.to_csv("output")
+injury_df.to_csv("injury")
 
 
-df_sorted['injuries'] = injury_column
+#print(df_sorted.head())
+# print(injury_column)
 
-print(df_sorted.head())
 
 # col_names = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species']
 # df = pd.read_csv("iris.csv", skiprows=1, header=None, names=col_names)
-x = df.iloc[:, :-1].values
-y = df.iloc[:, -1].values.reshape(-1, 1)
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=41)
-classifier = DecisionTreeClassifier(min_sample_split=3, max_depth=3)
-classifier.fit(x_train, y_train)
+# x = df.iloc[:, :-1].values
+# y = df.iloc[:, -1].values.reshape(-1, 1)
+# x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=41)
+# classifier = DecisionTreeClassifier(min_sample_split=3, max_depth=3)
+# classifier.fit(x_train, y_train)
 # classifier.print_tree()
 
-y_pred = classifier.predict(x_test)
-print(accuracy_score(y_test, y_pred))
+# y_pred = classifier.predict(x_test)
+# print(accuracy_score(y_test, y_pred))
 
-df_sorted.to_csv('df_sorted')
+# df_sorted.to_csv('df_sorted')
