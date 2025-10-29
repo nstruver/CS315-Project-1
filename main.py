@@ -142,7 +142,6 @@ class DecisionTreeClassifier():
         for feature in feature_labels:
             probability_feature = len(feature_slice[feature_slice == feature]) / len(feature_slice)
             gini += (probability_feature**2)
-        print("Made it here!")
         return 1-gini
     
     def calculate_leaf_value(self, y):
@@ -234,30 +233,27 @@ def get_name(pitcher):
 
 def create_total_injuries(df, injury_list):
     injury_column = []
-    
-    for injured in injury_list:
-        injured_players = injured['pitcher_name']
-        injury_types = [inj['injury_type'] for inj in injury_list]
-        players_list = df['player_name'].tolist()
+
+    injured_players = [inj['pitcher_name'] for inj in injury_list]
+    injury_types = [inj['injury_type'] for inj in injury_list]
+    players_list = df['player_name'].tolist()
     
     i = 0
     j = 0
-    print(len(injured_players))
+    
     while i < len(players_list):
         player = players_list[i]
         
         if j < len(injured_players) and player == injured_players[j]:
-            print(injury_types[j])
-            injury_column.append(injury_types[j])
+            injury_column.append(1)
             i += 1
             j += 1
-            
         elif j < len(injured_players) and injured_players[j] not in players_list:
             j += 1
         else:
-            injury_column.append('0')
+            injury_column.append(0)
             i += 1
-            
+    
     return injury_column
 
             
@@ -313,3 +309,49 @@ injury_df.to_csv("injury")
 # print(accuracy_score(y_test, y_pred))
 
 # df_sorted.to_csv('df_sorted')
+
+
+
+
+
+
+
+
+
+
+# injury_column = []
+    
+    # for injured in injury_list:
+    #     injured_players = injured['pitcher_name']
+    #     injury_types = [inj['injury_type'] for inj in injury_list]
+    #     players_list = df['player_name'].tolist()
+    
+    # i = 0
+    # j = 0
+    # injured_pitchers = [injury["pitcher_name"] for injury in injury_list]
+    # # print(injury_list)
+    # # print(len(players_list))
+    # # print(len(injured_pitchers))
+    # # print(set(injury_types))
+    # # print(len(players_list))
+    # while i < len(players_list):
+    #     player = players_list[i]
+
+    #     if player in injured_pitchers:
+    #         injury_column.append(injury_types[j])
+    #         i += 1
+    #         j += 1
+        
+    #     # if j < len(injured_players) and player == injured_players[j]:
+    #     #     print(injury_types[j])
+    #     #     injury_column.append(injury_types[j])
+    #     #     i += 1
+    #     #     j += 1
+            
+    #     elif j < len(injured_players) and injured_players[j] not in players_list:
+    #         j += 1
+    #     else:
+    #         injury_column.append('0')
+    #         i += 1
+    # print(len(injury_column))   
+    # 
