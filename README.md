@@ -3,7 +3,11 @@ Decision Tree
 
 We found that no database contains both pitch metric data and injury data. Thus, we used Baseball Savant for the pitch metrics data and Sportsradar for the injury data. 
 
-Data handling problem: The pitch dataset includes pitch metrics from 2017 - current, while the injury data is only current injuries.
+Potential Problem with the random forest training - If each individual decision tree in the ensemble is trained on permutations of the entire dataset, then any row that we could use to test the model has a high chance of being in a decision trees training set. Therefore, do we need to train-test split the data at the very start of creating the decision trees so that we have truly unseen data to test on, or is this not an issue? (I have a feeling this IS an issue)
+
+Solution: simply train-test split the data, then use only the training data in the entire process of creating the bootstrapped datasets, and therefore training the decision trees. Only introduce the testing data after creating the random forest to test.
+
+Data handling problem - The pitch dataset includes pitch metrics from 2017 - current, while the injury data is only current injuries.
 
 Potential solutions:
 1) Finding a source of injury data from 2017 - current would give us more data to work with, and thus would be nice.
