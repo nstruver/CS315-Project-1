@@ -314,7 +314,8 @@ test_sorted.to_csv("output.csv")
 # around 100 datasets
 # Potentially drop columns with NaN values
 # test_sorted.dropna()
-random_tree = pd.DataFrame(columns=columns)
+random_tree = pd.DataFrame(columns=columns + ["injuries"])
+
 # Choose row 2298 times
 for _ in range(len(test_sorted)):
     row_index = randint(1, len(test_sorted)-1)
@@ -322,24 +323,66 @@ for _ in range(len(test_sorted)):
     print(test_sorted.iloc[row_index])
     random_tree.loc[len(random_tree)] = test_sorted.iloc[row_index]
 
+random_tree.to_csv("random_mid.csv")
 # Randomly select features, cols 4 to 15
+
+number_features = 9
 total_features = []
 all_columns = test_sorted.columns.to_list()
+random_tree.drop(columns="pitches")
 i = 0
-while i < 9:
-    feature_index = randint(4, 15)
-    if all_columns[feature_index] in random_tree.columns.to_list():
+while i < number_features:
+    columns = random_tree.columns.to_list()
+    feature_index = randint(4, len(columns)-1)
+    if all_columns[feature_index] in columns:
         random_tree.drop(columns=all_columns[feature_index])
         i += 1
 random_tree.to_csv("random.csv")
 
 
+class RandomTree():
+    def __init__(self, keep_columns, starting_df):
+        """An implementation random decision tree"""
+        self.random_tree_df = pd.DataFrame(columns=keep_columns)
+        self.createRandomTree(starting_df)
+
+    def chooseRows(self, df):
+        """Pick random rows with replacement"""
+        output = []
+        for _ in range(len(df)):
+            row_index = randint(1, len(df)-1)
+            # Add row to dataframe
+            output.append(row_index)
+            # random_tree.loc[len(random_tree)] = df.iloc[row_index]
+        return output
+
+# Note: Make this with replacement
+    def chooseFeatures(self, all_columns):
+        """Pick random columns with replacement"""
+        i = 0
+        while i < number_features:
+            columns = self.random_tree_df.columns.to_list()
+            feature_index = randint(4, len(columns)-1)
+            if all_columns[feature_index] in columns:
+                self.random_tree_df.drop(columns=all_columns[feature_index])
+                i += 1
+
+    def createRandomTree(self, starting_df):
+        """Create random decision trees for random forest classification"""
+
+        selected_rows = self.chooseRows(starting_df)
+
+        for row_index in selected_rows:
+            self.random_tree_df.loc[len(self.random_tree_df)] = starting_df.iloc[row_index]
+
+        all_columns = starting_df.columns.to_list()
+        self.chooseFeatures(all_columns)
+        self.random_tree_df.to_csv("potent.csv")
+        
 
 
-
-
-
-
+tree = RandomTree(columns+["injuries"], test_sorted)
+# tree.createRandomTree(test_sorted)
 
 
 # injury_column = []
