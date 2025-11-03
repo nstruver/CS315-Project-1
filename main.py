@@ -287,7 +287,7 @@ injuries = find_injuries(response)
 sorted_injuries = sorted(injuries, key=get_name)
 injury_column = create_total_injuries(test_sorted, sorted_injuries)
 test_sorted['injuries'] = injury_column
-
+test_sorted.dropna()
 test_sorted.to_csv("output.csv")
 
 
@@ -320,7 +320,6 @@ random_tree = pd.DataFrame(columns=columns + ["injuries"])
 for _ in range(len(test_sorted)):
     row_index = randint(1, len(test_sorted)-1)
     # Add row to dataframe
-    print(test_sorted.iloc[row_index])
     random_tree.loc[len(random_tree)] = test_sorted.iloc[row_index]
 
 random_tree.to_csv("random_mid.csv")
@@ -339,12 +338,13 @@ while i < number_features:
         i += 1
 random_tree.to_csv("random.csv")
 
-
 class RandomTree():
-    def __init__(self, keep_columns, starting_df):
+    def __init__(self, number_features, keep_columns, starting_df, min_sample_split, max_depth):
         """An implementation random decision tree"""
+        self.number_features = number_features
         self.random_tree_df = pd.DataFrame(columns=keep_columns)
-        self.createRandomTree(starting_df)
+        self.createTreeDataSet(starting_df)
+        self.tree = DecisionTreeClassifier(min_sample_split, max_depth)
 
     def chooseRows(self, df):
         """Pick random rows with replacement"""
@@ -360,14 +360,14 @@ class RandomTree():
     def chooseFeatures(self, all_columns):
         """Pick random columns with replacement"""
         i = 0
-        while i < number_features:
+        while i < self.number_features:
             columns = self.random_tree_df.columns.to_list()
-            feature_index = randint(4, len(columns)-1)
+            feature_index = randint(4, 15-1)
             if all_columns[feature_index] in columns:
                 self.random_tree_df.drop(columns=all_columns[feature_index])
                 i += 1
 
-    def createRandomTree(self, starting_df):
+    def createTreeDataSet(self, starting_df):
         """Create random decision trees for random forest classification"""
 
         selected_rows = self.chooseRows(starting_df)
@@ -381,8 +381,16 @@ class RandomTree():
         
 
 
-tree = RandomTree(columns+["injuries"], test_sorted)
-# tree.createRandomTree(test_sorted)
+tree = RandomTree(9, columns+["injuries"], test_sorted, 3, 3)
+# tree.createTreeDataSet(test_sorted)
+
+df = pd.read_csv("output.csv", skiprows=1, header=None, names=columns)
+x = df.iloc[:, :-1].values
+y = df.iloc[:, -1].values.reshape(-1, 1)
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=41)
+tree.tree.fit(x_train, y_train)
+y_pred = tree.tree.predict(x_test)
+print(accuracy_score(y_test, y_pred))
 
 
 # injury_column = []
