@@ -339,12 +339,17 @@ while i < number_features:
 random_tree.to_csv("random.csv")
 
 class RandomTree():
-    def __init__(self, number_features, keep_columns, starting_df, min_sample_split, max_depth):
+    def __init__(self, smallest_index, number_features, keep_columns, num_columns, starting_df, min_sample_split, max_depth):
         """An implementation random decision tree"""
+        # Has to be near the top, otherwise function call happens first, leading to a no attribute error
+        self.smallest_index = smallest_index
         self.number_features = number_features
+        self.num_columns = num_columns - 1
         self.random_tree_df = pd.DataFrame(columns=keep_columns)
         self.createTreeDataSet(starting_df)
         self.tree = DecisionTreeClassifier(min_sample_split, max_depth)
+
+
 
     def chooseRows(self, df):
         """Pick random rows with replacement"""
@@ -362,7 +367,7 @@ class RandomTree():
         i = 0
         while i < self.number_features:
             columns = self.random_tree_df.columns.to_list()
-            feature_index = randint(4, 15-1)
+            feature_index = randint(self.smallest_index, self.num_columns - 1)
             if all_columns[feature_index] in columns:
                 self.random_tree_df.drop(columns=all_columns[feature_index])
                 i += 1
@@ -380,11 +385,14 @@ class RandomTree():
         self.random_tree_df.to_csv("potent.csv")
         
 
-
-tree = RandomTree(9, columns+["injuries"], test_sorted, 3, 3)
+columns = test_sorted.columns.to_list()
+num_columns = len(columns)
+# columns = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species']
+# num_columns = len(columns)
+# df = pd.read_csv("iris.csv", skiprows=1, header=None, names=columns)
+df = test_sorted
+tree = RandomTree(4, 9, columns, num_columns, test_sorted, 3, 3)
 # tree.createTreeDataSet(test_sorted)
-
-df = pd.read_csv("output.csv", skiprows=1, header=None, names=columns)
 x = df.iloc[:, :-1].values
 y = df.iloc[:, -1].values.reshape(-1, 1)
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=41)
