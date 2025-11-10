@@ -84,7 +84,7 @@ class DecisionTreeClassifier():
                 if len(dataset_left) > 0 and len(dataset_right) > 0:
                     y, left_y, right_y = dataset[:, -1], dataset_left[:, -1], dataset_right[:, -1]
                     # compute information gain
-                    cur_info_gain = self.information_gain(y, left_y, right_y, "gini")
+                    cur_info_gain = self.information_gain(y, left_y, right_y)
                     # update the best split, if needed
                     if cur_info_gain > max_info_gain:
                         best_split["feature_index"] = feature_index
