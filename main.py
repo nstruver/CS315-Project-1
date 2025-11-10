@@ -106,7 +106,7 @@ class DecisionTreeClassifier():
         dataset_right = np.array([row for row in dataset if row[feature_index] > threshold])
         return dataset_left, dataset_right
 
-    def information_gain(self, parent, left_child, right_child, mode="gini"):
+    def information_gain(self, parent, left_child, right_child, mode="entropy"):
         """Calculates the information gain of a split, defaults to entropy"""
         information_gain = 0
         weight_left = len(left_child) / len(parent)
@@ -282,11 +282,11 @@ test_dataframe = flip_names(test_dataframe)
 
 
 test_sorted = test_dataframe.sort_values(by = "player_name")
-response = call_api()
-injuries = find_injuries(response)
-sorted_injuries = sorted(injuries, key=get_name)
-injury_column = create_total_injuries(test_sorted, sorted_injuries)
-test_sorted['injuries'] = injury_column
+# response = call_api()
+# injuries = find_injuries(response)
+# sorted_injuries = sorted(injuries, key=get_name)
+# injury_column = create_total_injuries(test_sorted, sorted_injuries)
+# test_sorted['injuries'] = injury_column
 test_sorted.dropna()
 test_sorted.to_csv("output.csv")
 
@@ -314,29 +314,29 @@ test_sorted.to_csv("output.csv")
 # around 100 datasets
 # Potentially drop columns with NaN values
 # test_sorted.dropna()
-random_tree = pd.DataFrame(columns=columns + ["injuries"])
+# random_tree = pd.DataFrame(columns=columns + ["injuries"])
 
 # Choose row 2298 times
-for _ in range(len(test_sorted)):
-    row_index = randint(1, len(test_sorted)-1)
-    # Add row to dataframe
-    random_tree.loc[len(random_tree)] = test_sorted.iloc[row_index]
+# for _ in range(len(test_sorted)):
+#     row_index = randint(1, len(test_sorted)-1)
+#     # Add row to dataframe
+#     random_tree.loc[len(random_tree)] = test_sorted.iloc[row_index]
 
-random_tree.to_csv("random_mid.csv")
+# random_tree.to_csv("random_mid.csv")
 # Randomly select features, cols 4 to 15
 
-number_features = 9
-total_features = []
-all_columns = test_sorted.columns.to_list()
-random_tree.drop(columns="pitches")
-i = 0
-while i < number_features:
-    columns = random_tree.columns.to_list()
-    feature_index = randint(4, len(columns)-1)
-    if all_columns[feature_index] in columns:
-        random_tree.drop(columns=all_columns[feature_index])
-        i += 1
-random_tree.to_csv("random.csv")
+# number_features = 9
+# total_features = []
+# all_columns = test_sorted.columns.to_list()
+# random_tree.drop(columns="pitches")
+# i = 0
+# while i < number_features:
+#     columns = random_tree.columns.to_list()
+#     feature_index = randint(4, len(columns)-1)
+#     if all_columns[feature_index] in columns:
+#         random_tree.drop(columns=all_columns[feature_index])
+#         i += 1
+# random_tree.to_csv("random.csv")
 
 class RandomTree():
     def __init__(self, smallest_index, number_features, keep_columns, num_columns, starting_df, min_sample_split, max_depth):
@@ -346,6 +346,7 @@ class RandomTree():
         self.number_features = number_features
         self.num_columns = num_columns - 1
         self.random_tree_df = pd.DataFrame(columns=keep_columns)
+        self.pruned_df = pd.DataFrame()
         self.createTreeDataSet(starting_df)
         self.tree = DecisionTreeClassifier(min_sample_split, max_depth)
 
@@ -364,6 +365,10 @@ class RandomTree():
 # Note: Make this with replacement
     def chooseFeatures(self, all_columns):
         """Pick random columns with replacement"""
+        # for _ in range(self.number_features-1):
+        #     feature_index = randint(self.smallest_index, self.num_columns - 1)
+        #     column_name = all_columns[feature_index]
+        #     self.pruned_df[column_name] = self.random_tree_df[column_name]
         i = 0
         while i < self.number_features:
             columns = self.random_tree_df.columns.to_list()
@@ -382,7 +387,7 @@ class RandomTree():
 
         all_columns = starting_df.columns.to_list()
         self.chooseFeatures(all_columns)
-        self.random_tree_df.to_csv("potent.csv")
+        self.pruned_df.to_csv("potent.csv")
         
 
 columns = test_sorted.columns.to_list()
@@ -391,7 +396,9 @@ num_columns = len(columns)
 # num_columns = len(columns)
 # df = pd.read_csv("iris.csv", skiprows=1, header=None, names=columns)
 df = test_sorted
-tree = RandomTree(4, 9, columns, num_columns, test_sorted, 3, 3)
+number_features = 9
+starting_index = 4
+tree = RandomTree(starting_index, number_features, columns, num_columns, test_sorted, 3, 3)
 # tree.createTreeDataSet(test_sorted)
 x = df.iloc[:, :-1].values
 y = df.iloc[:, -1].values.reshape(-1, 1)
