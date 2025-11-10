@@ -3,6 +3,20 @@ Decision Tree
 
 We found that no database contains both pitch metric data and injury data. Thus, we used Baseball Savant for the pitch metrics data and Sportsradar for the injury data. 
 
+Potential Problem with the random forest training - If each individual decision tree in the ensemble is trained on permutations of the entire dataset, then any row that we could use to test the model has a high chance of being in a decision trees training set. Therefore, do we need to train-test split the data at the very start of creating the decision trees so that we have truly unseen data to test on, or is this not an issue? (I have a feeling this IS an issue)
+
+Solution: simply train-test split the data, then use only the training data in the entire process of creating the bootstrapped datasets, and therefore training the decision trees. Only introduce the testing data after creating the random forest to test.
+
+Data handling problem - The pitch dataset includes pitch metrics from 2017 - current, while the injury data is only current injuries.
+
+Potential solutions:
+1) Finding a source of injury data from 2017 - current would give us more data to work with, and thus would be nice.
+   -If it is possible to find year-by-year injury information, then it would be useful to split the pitch metric data year-by-year, and pair this with the injury data by year. This will give us features that are more      correlated to their respective output.
+   -Possible source of injury data: https://github.com/robotallie/baseball-injuries
+   
+3) If solution 1 is not possible, then using pitch data from only the current season(possibly the season before as well) would give us data that better reflects circumstances that could predict injury.
+   
+
 Potential Solution to match pitch metrics to injury data:
 
 The data from the CSV file has player name in the form: last_name, first_name. So, we should be able to split on the comma, flip the data to be [first_name, last_name], and match it to the first_name and last_name parameters from the API call data. That way, each player's pitch metrics and injury data are connected.
