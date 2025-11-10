@@ -257,21 +257,6 @@ def create_total_injuries(df, injury_list):
     
     return injury_column
 
-            
-         
-
-    
-# df = pd.read_csv("./savant_data.csv")
-# df = flip_names(df)
-# df_sorted = df.sort_values(by = "player_name")
-# response = call_api()
-# injuries = find_injuries(response)
-# sorted_injuries = sorted(injuries, key =get_name)
-
-# injury_column = create_total_injuries(df_sorted, sorted_injuries)
-# injury_df = pd.DataFrame(injury_column)
-# df_sorted['injuries'] = injury_column
-
 
 columns = ["pitches","player_id","player_name","total_pitches",
            "spin_rate","velocity","effective_speed","release_extension"
@@ -282,63 +267,9 @@ test_dataframe = flip_names(test_dataframe)
 
 
 test_sorted = test_dataframe.sort_values(by = "player_name")
-# response = call_api()
-# injuries = find_injuries(response)
-# sorted_injuries = sorted(injuries, key=get_name)
-# injury_column = create_total_injuries(test_sorted, sorted_injuries)
-# test_sorted['injuries'] = injury_column
 test_sorted.dropna()
 test_sorted["injuries"] = 0
 test_sorted.to_csv("output.csv")
-
-
-
-#print(df_sorted.head())
-# print(injury_column)
-
-
-# col_names = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species']
-# df = pd.read_csv("output.csv", skiprows=1, header=None, names=columns)
-# x = df.iloc[:, :-1].values
-# y = df.iloc[:, -1].values.reshape(-1, 1)
-# x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=41)
-# classifier = DecisionTreeClassifier(min_sample_split=3, max_depth=3)
-# classifier.fit(x_train, y_train)
-# classifier.print_tree()
-
-# y_pred = classifier.predict(x_test)
-# print(accuracy_score(y_test, y_pred))
-
-# df_sorted.to_csv('df_sorted')
-
-
-# Random columns, from 4 to 15
-# around 100 datasets
-# Potentially drop columns with NaN values
-# test_sorted.dropna()
-# random_tree = pd.DataFrame(columns=columns + ["injuries"])
-
-# Choose row 2298 times
-# for _ in range(len(test_sorted)):
-#     row_index = randint(1, len(test_sorted)-1)
-#     # Add row to dataframe
-#     random_tree.loc[len(random_tree)] = test_sorted.iloc[row_index]
-
-# random_tree.to_csv("random_mid.csv")
-# Randomly select features, cols 4 to 15
-
-# number_features = 9
-# total_features = []
-# all_columns = test_sorted.columns.to_list()
-# random_tree.drop(columns="pitches")
-# i = 0
-# while i < number_features:
-#     columns = random_tree.columns.to_list()
-#     feature_index = randint(4, len(columns)-1)
-#     if all_columns[feature_index] in columns:
-#         random_tree.drop(columns=all_columns[feature_index])
-#         i += 1
-# random_tree.to_csv("random.csv")
 
 class RandomTree():
     def __init__(self, smallest_index, number_features, keep_columns, num_columns, starting_df, min_sample_split, max_depth):
@@ -351,8 +282,6 @@ class RandomTree():
 
         self.createTreeDataSet(starting_df)
         self.tree = DecisionTreeClassifier(min_sample_split, max_depth)
-
-
 
     def chooseRows(self, df):
         """Pick random rows with replacement"""
@@ -402,41 +331,3 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_s
 tree.tree.fit(x_train, y_train)
 y_pred = tree.tree.predict(x_test)
 print(accuracy_score(y_test, y_pred))
-
-
-# injury_column = []
-    
-    # for injured in injury_list:
-    #     injured_players = injured['pitcher_name']
-    #     injury_types = [inj['injury_type'] for inj in injury_list]
-    #     players_list = df['player_name'].tolist()
-    
-    # i = 0
-    # j = 0
-    # injured_pitchers = [injury["pitcher_name"] for injury in injury_list]
-    # # print(injury_list)
-    # # print(len(players_list))
-    # # print(len(injured_pitchers))
-    # # print(set(injury_types))
-    # # print(len(players_list))
-    # while i < len(players_list):
-    #     player = players_list[i]
-
-    #     if player in injured_pitchers:
-    #         injury_column.append(injury_types[j])
-    #         i += 1
-    #         j += 1
-        
-    #     # if j < len(injured_players) and player == injured_players[j]:
-    #     #     print(injury_types[j])
-    #     #     injury_column.append(injury_types[j])
-    #     #     i += 1
-    #     #     j += 1
-            
-    #     elif j < len(injured_players) and injured_players[j] not in players_list:
-    #         j += 1
-    #     else:
-    #         injury_column.append('0')
-    #         i += 1
-    # print(len(injury_column))   
-    # 
