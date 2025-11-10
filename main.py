@@ -275,7 +275,7 @@ def create_total_injuries(df, injury_list):
 
 columns = ["pitches","player_id","player_name","total_pitches",
            "spin_rate","velocity","effective_speed","release_extension"
-           ,"k_percent","bb","bb_percent","release_pos_z","release_pos_x","arm_angle"] 
+           ,"k_percent","bb","bb_percent","release_pos_z","release_pos_x","arm_angle"]
 
 test_dataframe = pd.read_csv('savant_data.csv', usecols=columns)
 test_dataframe = flip_names(test_dataframe)
@@ -288,7 +288,9 @@ test_sorted = test_dataframe.sort_values(by = "player_name")
 # injury_column = create_total_injuries(test_sorted, sorted_injuries)
 # test_sorted['injuries'] = injury_column
 test_sorted.dropna()
+test_sorted["injuries"] = 0
 test_sorted.to_csv("output.csv")
+
 
 
 #print(df_sorted.head())
@@ -346,7 +348,7 @@ class RandomTree():
         self.number_features = number_features
         self.num_columns = num_columns - 1
         self.random_tree_df = pd.DataFrame(columns=keep_columns)
-        self.pruned_df = pd.DataFrame()
+
         self.createTreeDataSet(starting_df)
         self.tree = DecisionTreeClassifier(min_sample_split, max_depth)
 
@@ -362,13 +364,8 @@ class RandomTree():
             # random_tree.loc[len(random_tree)] = df.iloc[row_index]
         return output
 
-# Note: Make this with replacement
     def chooseFeatures(self, all_columns):
         """Pick random columns with replacement"""
-        # for _ in range(self.number_features-1):
-        #     feature_index = randint(self.smallest_index, self.num_columns - 1)
-        #     column_name = all_columns[feature_index]
-        #     self.pruned_df[column_name] = self.random_tree_df[column_name]
         i = 0
         while i < self.number_features:
             columns = self.random_tree_df.columns.to_list()
@@ -387,7 +384,6 @@ class RandomTree():
 
         all_columns = starting_df.columns.to_list()
         self.chooseFeatures(all_columns)
-        self.pruned_df.to_csv("potent.csv")
         
 
 columns = test_sorted.columns.to_list()
@@ -398,7 +394,7 @@ num_columns = len(columns)
 df = test_sorted
 number_features = 9
 starting_index = 4
-tree = RandomTree(starting_index, number_features, columns, num_columns, test_sorted, 3, 3)
+tree = RandomTree(starting_index, number_features, columns, num_columns, df, 3, 3)
 # tree.createTreeDataSet(test_sorted)
 x = df.iloc[:, :-1].values
 y = df.iloc[:, -1].values.reshape(-1, 1)
