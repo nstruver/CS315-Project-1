@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 import requests
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
 from random import randint
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 
 class Node():
     def __init__(self, feature_index=None, threshold=None, left=None, right=None, info_gain=None, value=None):
@@ -22,7 +22,7 @@ class Node():
 
         self.value = value
 
-class DecisionTreeClassifier():
+class DecisionTreeRegressor():
     def __init__(self, min_sample_split=2, max_depth=2):
         """An implementation of a Classifier Decision Tree, using entropy"""
         # Each split can have 2 or more splits
@@ -44,23 +44,31 @@ class DecisionTreeClassifier():
     def build_tree(self, dataset, cur_depth=0):
         """Recursively build a binary decision tree"""
 
-        x, y = dataset[:,:-1], dataset[:,-1]
-        # Extract the number of samples and the number of features
+        x, y = dataset[:, :-1], dataset[:, -1]
         num_samples, num_features = np.shape(x)
+
+        best_split = {} #Initializes the  to avoid an UnboundLocalError
 
         if num_samples >= self.min_sample_split and cur_depth <= self.max_depth:
             # find the best split
             best_split = self.get_best_split(dataset, num_samples, num_features)
-            # Creates all of the left subtrees, reaches a leaf node, then creates all of the right subtrees
-            if best_split["info_gain"] > 0:
-                left_subtree = self.build_tree(best_split["dataset_left"], cur_depth=1)
-                right_subtree = self.build_tree(best_split["dataset_right"], cur_depth = 1)
-                # Return the decision node for the current classifier, decision node
-                return Node(feature_index=best_split["feature_index"], threshold=best_split["threshold"], left=left_subtree, right=right_subtree, info_gain=best_split["info_gain"])
-        # compute leaf node
+
+            if best_split and "info_gain" in best_split and best_split["info_gain"] > 0:
+                left_subtree = self.build_tree(best_split["dataset_left"], cur_depth + 1)
+                right_subtree = self.build_tree(best_split["dataset_right"], cur_depth + 1)
+                return Node(
+                    feature_index=best_split["feature_index"],
+                threshold=best_split["threshold"],
+                left=left_subtree,
+                right=right_subtree,
+                info_gain=best_split["info_gain"]
+            )
+
+    # compute leaf node
         leaf_value = self.calculate_leaf_value(y)
-        # return leaf node
         return Node(value=leaf_value)
+
+
     
     def get_best_split(self, dataset, num_samples, num_features):
         "Finds the best split for a dataset and return a dictionary"
@@ -106,16 +114,15 @@ class DecisionTreeClassifier():
         dataset_right = np.array([row for row in dataset if row[feature_index] > threshold])
         return dataset_left, dataset_right
 
-    def information_gain(self, parent, left_child, right_child, mode="entropy"):
-        """Calculates the information gain of a split, defaults to entropy"""
-        information_gain = 0
+    def information_gain(self, parent, left_child, right_child, mode="variance"):
+        """Calculates the reduction in variance (***not actually information gain***)"""
         weight_left = len(left_child) / len(parent)
         weight_right = len(right_child) / len(parent)
-        if mode == "entropy":
-            information_gain = self.entropy(parent) - (self.entropy(left_child) * weight_left + self.entropy(right_child) * weight_right)
-        elif mode == "gini":
-            information_gain = self.gini(parent) - (self.gini(left_child) * weight_left + self.gini(right_child) * weight_right)
-        return information_gain
+        parent_var = np.var(parent)
+        left_var = np.var(left_child)
+        right_var = np.var(right_child)
+        return parent_var - (weight_left * left_var + weight_right * right_var)
+
 
     def entropy(self, feature_slice):
         """Calculates entropy based on the probability of the classifier"""
@@ -146,9 +153,9 @@ class DecisionTreeClassifier():
         return 1-gini
     
     def calculate_leaf_value(self, y):
-        """Compute the leaf value using a majority voting system"""
-        y = list(y)
-        return max(y, key=y.count)
+        """Compute the leaf value using mean"""
+        return np.mean(y)
+
     
     def print_tree(self, tree=None, indent = " "):
         """Prints a visual representation of the Decision Tree"""
@@ -183,7 +190,7 @@ class DecisionTreeClassifier():
 
 def call_api():
     url = "https://api.sportradar.com/mlb/trial/v8/en/league/injuries.json"
-    API_KEY = 'tTKcLzpDz1zoW2wuXRrgBnRxzmeMSOuUPWaAgVf0'
+    API_KEY = 'api_key'
     params = {'api_key':API_KEY}
     response = requests.get(url, params=params)
     response = response.json()
@@ -236,7 +243,6 @@ def create_total_injuries(df, injury_list):
     injury_column = []
 
     injured_players = [inj['pitcher_name'] for inj in injury_list]
-    injury_types = [inj['injury_type'] for inj in injury_list]
     players_list = df['player_name'].tolist()
     
     i = 0
@@ -262,7 +268,7 @@ columns = ["pitches","player_id","player_name","total_pitches",
            "spin_rate","velocity","effective_speed","release_extension"
            ,"k_percent","bb","bb_percent","release_pos_z","release_pos_x","arm_angle"]
 
-test_dataframe = pd.read_csv('savant_data.csv', usecols=columns)
+test_dataframe = pd.read_csv('C:/Users/nstru/Downloads/savant_data.csv', usecols=columns)
 test_dataframe = flip_names(test_dataframe)
 
 
@@ -281,7 +287,7 @@ class RandomTree():
         self.random_tree_df = pd.DataFrame(columns=keep_columns)
 
         self.createTreeDataSet(starting_df)
-        self.tree = DecisionTreeClassifier(min_sample_split, max_depth)
+        self.tree = DecisionTreeRegressor(min_sample_split, max_depth)
 
     def chooseRows(self, df):
         """Pick random rows with replacement"""
@@ -314,6 +320,42 @@ class RandomTree():
         all_columns = starting_df.columns.to_list()
         self.chooseFeatures(all_columns)
         
+class RandomForestRegressor():
+    def __init__(self, n_trees=10, min_sample_split=2, max_depth=3, number_features=None):
+        """Random Forest built using DecisionTreeRegressor"""
+        self.n_trees = n_trees
+        self.min_sample_split = min_sample_split
+        self.max_depth = max_depth
+        self.number_features = number_features
+        self.trees = []
+
+    def fit(self, X, y):
+        n_samples, n_features = X.shape
+        if self.number_features is None:
+            self.number_features = int(np.sqrt(n_features))
+
+        for _ in range(self.n_trees):
+            indices = np.random.choice(n_samples, n_samples, replace=True)
+            X_sample, y_sample = X[indices], y[indices]
+
+            feature_indices = np.random.choice(n_features, self.number_features, replace=False)
+
+            X_subset = X_sample[:, feature_indices]
+            tree = DecisionTreeRegressor(min_sample_split=self.min_sample_split, max_depth=self.max_depth)
+            tree.fit(X_subset, y_sample)
+
+            self.trees.append((tree, feature_indices))
+
+    def predict(self, X):
+        tree_preds = np.zeros((len(self.trees), X.shape[0]))
+        for i, (tree, feature_indices) in enumerate(self.trees):
+            X_subset = X[:, feature_indices]
+            preds = tree.predict(X_subset)
+            tree_preds[i] = preds
+
+        return np.mean(tree_preds, axis=0)
+
+        
 
 columns = test_sorted.columns.to_list()
 num_columns = len(columns)
@@ -325,9 +367,14 @@ number_features = 9
 starting_index = 4
 tree = RandomTree(starting_index, number_features, columns, num_columns, df, 3, 3)
 # tree.createTreeDataSet(test_sorted)
-x = df.iloc[:, :-1].values
-y = df.iloc[:, -1].values.reshape(-1, 1)
+df = df.drop(columns=['injuries'])
+x = df.drop(columns=['k_percent']).values
+y = df['k_percent'].values.reshape(-1, 1)
+
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=41)
-tree.tree.fit(x_train, y_train)
-y_pred = tree.tree.predict(x_test)
-print(accuracy_score(y_test, y_pred))
+forest = RandomForestRegressor(n_trees=100, min_sample_split=3, max_depth=5)
+forest.fit(x_train, y_train)
+y_pred = forest.predict(x_test)
+print("MAE: ", mean_absolute_error(y_test, y_pred))
+print("MSE:", mean_squared_error(y_test, y_pred))
+print("R²:", r2_score(y_test, y_pred))
