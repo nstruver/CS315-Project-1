@@ -378,7 +378,7 @@ x = df.drop(columns=['k_percent']).values
 y = df['k_percent'].values.reshape(-1, 1)
 
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=41)
-forest = RandomForestRegressor(test_sorted, columns, n_trees=1, min_sample_split=3, max_depth=5, number_features=number_features, starting_feature_index=starting_index)
+forest = RandomForestRegressor(test_sorted, columns, n_trees=100, min_sample_split=3, max_depth=5, number_features=number_features, starting_feature_index=starting_index)
 forest.fit(x_train, y_train)
 y_pred = forest.predict(x_test)
 print("MAE: ", mean_absolute_error(y_test, y_pred))
