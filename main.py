@@ -4,6 +4,7 @@ import requests
 from sklearn.model_selection import train_test_split
 from random import randint
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
+from math import sqrt
 
 class Node():
     def __init__(self, feature_index=None, threshold=None, left=None, right=None, info_gain=None, value=None):
@@ -263,27 +264,13 @@ def create_total_injuries(df, injury_list):
     
     return injury_column
 
-
-columns = ["pitches","player_id","player_name","total_pitches",
-           "spin_rate","velocity","effective_speed","release_extension"
-           ,"k_percent","bb","bb_percent","release_pos_z","release_pos_x","arm_angle"]
-
-test_dataframe = pd.read_csv('C:/Users/nstru/Downloads/savant_data.csv', usecols=columns)
-test_dataframe = flip_names(test_dataframe)
-
-
-test_sorted = test_dataframe.sort_values(by = "player_name")
-test_sorted.dropna()
-test_sorted["injuries"] = 0
-test_sorted.to_csv("output.csv")
-
 class RandomTree():
-    def __init__(self, smallest_index, number_features, keep_columns, num_columns, starting_df, min_sample_split, max_depth):
+    def __init__(self, smallest_index, number_features, keep_columns, starting_df, min_sample_split, max_depth):
         """An implementation random decision tree"""
         # Has to be near the top, otherwise function call happens first, leading to a no attribute error
         self.smallest_index = smallest_index
         self.number_features = number_features
-        self.num_columns = num_columns - 1
+        self.pruned_features = sqrt(number_features)
         self.random_tree_df = pd.DataFrame(columns=keep_columns)
 
         self.createTreeDataSet(starting_df)
@@ -296,18 +283,20 @@ class RandomTree():
             row_index = randint(1, len(df)-1)
             # Add row to dataframe
             output.append(row_index)
-            # random_tree.loc[len(random_tree)] = df.iloc[row_index]
         return output
 
     def chooseFeatures(self, all_columns):
         """Pick random columns with replacement"""
-        i = 0
-        while i < self.number_features:
+        i = self.number_features
+        # Drops number_features amount of columns
+        while i > self.pruned_features:
             columns = self.random_tree_df.columns.to_list()
-            feature_index = randint(self.smallest_index, self.num_columns - 1)
+            # Find a random columns index
+            feature_index = randint(self.smallest_index, self.number_features - 1)
+            # Unless its already dropped, drop it
             if all_columns[feature_index] in columns:
                 self.random_tree_df.drop(columns=all_columns[feature_index])
-                i += 1
+                i -= 1
 
     def createTreeDataSet(self, starting_df):
         """Create random decision trees for random forest classification"""
@@ -319,7 +308,21 @@ class RandomTree():
 
         all_columns = starting_df.columns.to_list()
         self.chooseFeatures(all_columns)
-        
+
+
+columns = ["pitches","player_id","player_name","total_pitches",
+           "spin_rate","velocity","effective_speed","release_extension"
+           ,"k_percent","bb","bb_percent","release_pos_z","release_pos_x","arm_angle"]
+
+test_dataframe = pd.read_csv('savant_data.csv', usecols=columns)
+test_dataframe = flip_names(test_dataframe)
+
+
+test_sorted = test_dataframe.sort_values(by = "player_name")
+test_sorted.dropna()
+test_sorted.to_csv("output.csv")
+tree_data = test_sorted
+
 class RandomForestRegressor():
     def __init__(self, n_trees=10, min_sample_split=2, max_depth=3, number_features=None):
         """Random Forest built using DecisionTreeRegressor"""
@@ -341,38 +344,39 @@ class RandomForestRegressor():
             feature_indices = np.random.choice(n_features, self.number_features, replace=False)
 
             X_subset = X_sample[:, feature_indices]
-            tree = DecisionTreeRegressor(min_sample_split=self.min_sample_split, max_depth=self.max_depth)
-            tree.fit(X_subset, y_sample)
-
+            tree = RandomTree(4, 9, columns, tree_data, self.min_sample_split, self.max_depth)
+            tree.tree.fit(X_subset, y_sample)
+            # tree = DecisionTreeRegressor(min_sample_split=self.min_sample_split, max_depth=self.max_depth)
+            # tree.fit(X_subset, y_sample)
+# 
             self.trees.append((tree, feature_indices))
 
     def predict(self, X):
         tree_preds = np.zeros((len(self.trees), X.shape[0]))
         for i, (tree, feature_indices) in enumerate(self.trees):
             X_subset = X[:, feature_indices]
-            preds = tree.predict(X_subset)
+            preds = tree.tree.predict(X_subset)
             tree_preds[i] = preds
 
         return np.mean(tree_preds, axis=0)
 
-        
+# Use this for iris testing:
+    # columns = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species']
+    # num_columns = len(columns)
+    # df = pd.read_csv("iris.csv", skiprows=1, header=None, names=columns)
 
 columns = test_sorted.columns.to_list()
 num_columns = len(columns)
-# columns = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species']
-# num_columns = len(columns)
-# df = pd.read_csv("iris.csv", skiprows=1, header=None, names=columns)
 df = test_sorted
 number_features = 9
 starting_index = 4
-tree = RandomTree(starting_index, number_features, columns, num_columns, df, 3, 3)
+tree = RandomTree(starting_index, number_features, columns, df, 3, 3)
 # tree.createTreeDataSet(test_sorted)
-df = df.drop(columns=['injuries'])
 x = df.drop(columns=['k_percent']).values
 y = df['k_percent'].values.reshape(-1, 1)
 
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=41)
-forest = RandomForestRegressor(n_trees=100, min_sample_split=3, max_depth=5)
+forest = RandomForestRegressor(n_trees=1, min_sample_split=3, max_depth=5)
 forest.fit(x_train, y_train)
 y_pred = forest.predict(x_test)
 print("MAE: ", mean_absolute_error(y_test, y_pred))
