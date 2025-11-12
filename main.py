@@ -324,13 +324,16 @@ test_sorted.to_csv("output.csv")
 tree_data = test_sorted
 
 class RandomForestRegressor():
-    def __init__(self, n_trees=10, min_sample_split=2, max_depth=3, number_features=None):
+    def __init__(self, shaping_data, columns, n_trees=10, min_sample_split=2, max_depth=3, number_features=None, starting_feature_index=0):
         """Random Forest built using DecisionTreeRegressor"""
+        self.shaping_data = shaping_data
         self.n_trees = n_trees
         self.min_sample_split = min_sample_split
         self.max_depth = max_depth
         self.number_features = number_features
+        self.starting_feature_index = starting_feature_index
         self.trees = []
+        self.columns = columns
 
     def fit(self, X, y):
         n_samples, n_features = X.shape
@@ -344,7 +347,7 @@ class RandomForestRegressor():
             feature_indices = np.random.choice(n_features, self.number_features, replace=False)
 
             X_subset = X_sample[:, feature_indices]
-            tree = RandomTree(4, 9, columns, tree_data, self.min_sample_split, self.max_depth)
+            tree = RandomTree(self.starting_feature_index, self.number_features, columns, self.shaping_data, self.min_sample_split, self.max_depth)
             tree.tree.fit(X_subset, y_sample)
             # tree = DecisionTreeRegressor(min_sample_split=self.min_sample_split, max_depth=self.max_depth)
             # tree.fit(X_subset, y_sample)
@@ -376,7 +379,7 @@ x = df.drop(columns=['k_percent']).values
 y = df['k_percent'].values.reshape(-1, 1)
 
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=41)
-forest = RandomForestRegressor(n_trees=1, min_sample_split=3, max_depth=5)
+forest = RandomForestRegressor(test_sorted, columns, n_trees=1, min_sample_split=3, max_depth=5, number_features=number_features, starting_feature_index=starting_index)
 forest.fit(x_train, y_train)
 y_pred = forest.predict(x_test)
 print("MAE: ", mean_absolute_error(y_test, y_pred))
