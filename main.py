@@ -309,20 +309,6 @@ class RandomTree():
         all_columns = starting_df.columns.to_list()
         self.chooseFeatures(all_columns)
 
-
-columns = ["pitches","player_id","player_name","total_pitches",
-           "spin_rate","velocity","effective_speed","release_extension"
-           ,"k_percent","bb","bb_percent","release_pos_z","release_pos_x","arm_angle"]
-
-test_dataframe = pd.read_csv('savant_data.csv', usecols=columns)
-test_dataframe = flip_names(test_dataframe)
-
-
-test_sorted = test_dataframe.sort_values(by = "player_name")
-test_sorted.dropna()
-test_sorted.to_csv("output.csv")
-tree_data = test_sorted
-
 class RandomForestRegressor():
     def __init__(self, shaping_data, columns, n_trees=10, min_sample_split=2, max_depth=3, number_features=None, starting_feature_index=0):
         """Random Forest built using DecisionTreeRegressor"""
@@ -367,6 +353,19 @@ class RandomForestRegressor():
     # columns = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species']
     # num_columns = len(columns)
     # df = pd.read_csv("iris.csv", skiprows=1, header=None, names=columns)
+
+columns = ["pitches","player_id","player_name","total_pitches",
+           "spin_rate","velocity","effective_speed","release_extension"
+           ,"k_percent","bb","bb_percent","release_pos_z","release_pos_x","arm_angle"]
+
+test_dataframe = pd.read_csv('savant_data.csv', usecols=columns)
+test_dataframe = flip_names(test_dataframe)
+
+
+test_sorted = test_dataframe.sort_values(by = "player_name")
+test_sorted.dropna()
+test_sorted.to_csv("output.csv")
+tree_data = test_sorted
 
 columns = test_sorted.columns.to_list()
 num_columns = len(columns)
