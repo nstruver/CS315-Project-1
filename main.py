@@ -8,7 +8,7 @@ from math import sqrt
 
 class Node():
     def __init__(self, feature_index=None, threshold=None, left=None, right=None, info_gain=None, value=None):
-        """An implementation of a node in a decision tree classifier"""
+        """An implementation of a node in a decision tree classifier, from Normalized Nerd video"""
         # for decision node
         self.feature_index = feature_index
         self.threshold = threshold
@@ -25,7 +25,7 @@ class Node():
 
 class DecisionTreeRegressor():
     def __init__(self, min_sample_split=2, max_depth=2):
-        """An implementation of a Classifier Decision Tree, using entropy"""
+        """An implementation of a Classifier Decision Tree, using entropy, from Normalized Nerd Video"""
         # Each split can have 2 or more splits
         # The tree can be smaller than max_depth
 
